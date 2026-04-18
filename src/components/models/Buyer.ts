@@ -1,4 +1,4 @@
-import { IBuyer } from "../../types/index.ts";
+import { IBuyer, TErrorsBuyer } from "../../types/index.ts";
 
 export class Buyer {
   protected buyerData: IBuyer;
@@ -29,10 +29,8 @@ export class Buyer {
     }
   }
 
-  validate(): Partial<Record<keyof IBuyer, string>> {
-    /* объект, у которого ключами могут быть поля из IBuyer,
-      а значениями — строки, но не все ключи обязаны присутствовать */
-    const errors: Partial<Record<keyof IBuyer, string>> = {};
+  validate(): TErrorsBuyer {
+    const errors: TErrorsBuyer = {};
 
     if (!this.buyerData.payment) {
       errors.payment = 'Не выбран вид оплаты';

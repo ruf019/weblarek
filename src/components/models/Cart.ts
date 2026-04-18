@@ -24,11 +24,7 @@ export class Cart {
   }
 
   getTotalPrice(): number {
-    let totalPrice = 0;
-    this.selectedProducts.forEach(product => {
-      totalPrice += (product.price ?? 0);
-    })
-    return totalPrice
+    return this.selectedProducts.reduce((acc, item) => acc + (item.price ?? 0), 0)
   }
 
   getCount(): number {
