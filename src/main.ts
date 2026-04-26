@@ -1,100 +1,108 @@
-import './scss/styles.scss';
-import { ProductCatalog, } from './components/models/ProductCatalog';
-import { Cart } from './components/models/Cart';
-import { Buyer } from './components/models/Buyer';
-import { apiProducts } from './utils/data';
-import { Api } from './components/base/Api';
-import { WebLarekApi } from './components/api/WebLarekApi';
-import { API_URL } from './utils/constants';
+import { WebLarekApi } from "./components/api/WebLarekApi";
+import { Api } from "./components/base/Api";
+import { EventEmitter } from "./components/base/Events";
+import { Cart } from "./components/models/Cart";
+import { ProductCatalog } from "./components/models/ProductCatalog";
+import { CardCatalog } from "./components/view/CardCatalog";
+import { CardPreview } from "./components/view/CardPreview";
+import { Gallery } from "./components/view/Gallery";
+import { Header } from "./components/view/Header";
+import { Modal } from "./components/view/Modal";
+import "./scss/styles.scss";
+import { IProduct } from "./types";
+import { API_URL } from "./utils/constants";
+import { cloneTemplate, ensureElement } from "./utils/utils";
 
-
-/* ----- ProductCatalog ----- */
-const productsModel = new ProductCatalog();
-
-productsModel.setProducts(apiProducts.items);
-
-console.log('========== Тестирование методов класса ProductCatalog ==========');
-console.log('Массив товаров из каталога:', productsModel.getProducts());
-
-const firstProduct = productsModel.getProducts()[0];
-const secondProduct = productsModel.getProducts()[1];
-
-console.log('Товар по id:', productsModel.getProductById(firstProduct.id));
-
-productsModel.setSelectedProduct(firstProduct);
-console.log('Выбранный товар:', productsModel.getSelectedProduct());
-
-
-/* ----- Cart ----- */
-const cartModel = new Cart();
-
-if (firstProduct) {
-  cartModel.addProduct(firstProduct);
-}
-
-if (secondProduct) {
-  cartModel.addProduct(secondProduct);
-}
-
-console.log('========== Тестирование класса Cart ==========');
-console.log('Товары в корзине:', cartModel.getProducts());
-console.log('Количество товаров в корзине:', cartModel.getCount());
-console.log('Общая стоимость корзины:', cartModel.getTotalPrice());
-
-
-console.log('Есть ли первый товар в корзине:', cartModel.hasProduct(firstProduct.id));
-
-cartModel.removeProduct(firstProduct);
-console.log('Корзина после удаления первого товара:', cartModel.getProducts());
-console.log('Есть ли первый товар в корзине после удаления:', cartModel.hasProduct(firstProduct.id));
-
-cartModel.clear();
-console.log('Корзина после очистки:', cartModel.getProducts());
-
-/* ----- Buyer ----- */
-const buyerModel = new Buyer();
-
-console.log('========== Тестирование класса Buyer ==========');
-console.log('Начальные данные покупателя:', buyerModel.getData());
-console.log('Ошибки валидации при пустых полях:', buyerModel.validate());
-
-buyerModel.setData({
-  address: 'Москва, ул. Ленина, д. 10',
-});
-
-console.log('После добавления адреса:', buyerModel.getData());
-console.log('Ошибки после добавления адреса:', buyerModel.validate());
-
-buyerModel.setData({
-  phone: '+79990000000',
-  email: 'user@example.com',
-});
-
-console.log('После добавления телефона и email:', buyerModel.getData());
-console.log('Ошибки после добавления телефона и email:', buyerModel.validate());
-
-buyerModel.setData({
-  payment: 'online',
-});
-
-console.log('После добавления способа оплаты:', buyerModel.getData());
-console.log('Ошибки после полного заполнения:', buyerModel.validate());
-
-buyerModel.clear();
-console.log('Данные покупателя после очистки:', buyerModel.getData());
-console.log('Ошибки после очистки:', buyerModel.validate());
-
-/* ----- WebLarekApi ----- */
+// API
 const baseApi = new Api(API_URL);
 const webLarekApi = new WebLarekApi(baseApi);
 
-console.log('========== Тестирование WebLarekApi ==========')
-webLarekApi.getProducts()
-  .then((data) => {
-    productsModel.setProducts(data.items);
-    console.log('Товары с сервера:', data);
-    console.log('Каталог в модели:', productsModel.getProducts());
-  })
-  .catch((error) => {
-    console.error('Ошибка получения товаров:', error);
+// Брокер событий
+const events = new EventEmitter();
+
+// Модели данных
+const productCatalog = new ProductCatalog(events);
+const cart = new Cart(events);
+
+// DOM-элементы и шаблоны
+const galleryElement = ensureElement<HTMLElement>(".gallery");
+const catalogCardTemplate = ensureElement<HTMLTemplateElement>("#card-catalog");
+const previewCardTemplate = ensureElement<HTMLTemplateElement>("#card-preview");
+const modalElement = ensureElement<HTMLElement>("#modal-container");
+const headerElement = ensureElement<HTMLElement>(".header");
+
+// View-компоненты
+const gallery = new Gallery(galleryElement);
+const modal = new Modal(events, modalElement);
+const header = new Header(events, headerElement);
+
+// Подписки на события
+events.on("catalog:changed", () => {
+  const productCards = productCatalog.getProducts().map((product) => {
+    const card = new CardCatalog(cloneTemplate(catalogCardTemplate), {
+      onClick: () => events.emit("card:select", product),
+    });
+
+    return card.render(product);
   });
+
+  gallery.render({ cards: productCards });
+});
+
+events.on<IProduct>("card:select", (product) => {
+  productCatalog.setSelectedProduct(product);
+
+  const previewCard = new CardPreview(cloneTemplate(previewCardTemplate), {
+    onClick: () => events.emit("card:toggle", product),
+  });
+
+  modal.render({
+    content: previewCard.render({
+      ...product,
+      inBasket: cart.hasProduct(product.id),
+      available: product.price !== null,
+    }),
+  });
+
+  modal.open();
+});
+
+events.on("modal:close", () => {
+  modal.close();
+});
+
+events.on<IProduct>("card:toggle", (product) => {
+  if (cart.hasProduct(product.id)) {
+    cart.removeProduct(product);
+  } else {
+    cart.addProduct(product);
+  }
+});
+
+events.on("basket:changed", () => {
+  header.render({
+    counter: cart.getCount(),
+  });
+
+  const selectProduct = productCatalog.getSelectedProduct();
+
+  if (selectProduct) {
+    const previewCard = new CardPreview(cloneTemplate(previewCardTemplate), {
+      onClick: () => events.emit("card:toggle", selectProduct),
+    });
+
+    modal.render({
+      content: previewCard.render({
+        ...selectProduct,
+        inBasket: cart.hasProduct(selectProduct.id),
+        available: selectProduct.price !== null,
+      }),
+    });
+  }
+});
+
+// Старт приложения
+webLarekApi
+  .getProducts()
+  .then((data) => productCatalog.setProducts(data.items))
+  .catch((error) => console.error(error));
