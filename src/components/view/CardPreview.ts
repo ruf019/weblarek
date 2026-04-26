@@ -4,9 +4,11 @@ import { CardWithImage, ICardWithImageData } from "./CardWithImage";
 
 interface ICardPreviewData extends ICardWithImageData {
   description: string;
+  inBasket: boolean;
+  available: boolean;
 }
 
-export class PreviewCard extends CardWithImage<ICardPreviewData> {
+export class CardPreview extends CardWithImage<ICardPreviewData> {
   protected descriptionElement: HTMLElement;
   protected purchaseButton: HTMLButtonElement;
 
@@ -23,5 +25,14 @@ export class PreviewCard extends CardWithImage<ICardPreviewData> {
 
   set description(value: string) {
     this.descriptionElement.textContent = value;
+  }
+
+  set inBasket(value: boolean) {
+    this.purchaseButton.textContent = value ? 'Убрать из корзины' : 'Купить';
+  }
+
+  set available(value: boolean) {
+    this.purchaseButton.disabled = !value;
+    this.purchaseButton.textContent = 'Недоступно';
   }
 }

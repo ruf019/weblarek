@@ -3,7 +3,7 @@ import { CardWithImage, ICardWithImageData } from "./CardWithImage";
 
 interface ICardCatalogData extends ICardWithImageData {};
 
-export class CatalogCard extends CardWithImage<ICardCatalogData> {
+export class CardCatalog extends CardWithImage<ICardCatalogData> {
   constructor(container: HTMLElement, actions?: ICardActions) {
     super(container);
 

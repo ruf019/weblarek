@@ -5,7 +5,7 @@ interface ICardBasketData extends ICardData {
   index: number;
 }
 
-export class BasketCard extends Card<ICardBasketData> {
+export class CardBasket extends Card<ICardBasketData> {
   protected indexElement: HTMLElement;
   protected deleteButton: HTMLButtonElement;
 
