@@ -32,7 +32,9 @@ export class CardPreview extends CardWithImage<ICardPreviewData> {
   }
 
   set available(value: boolean) {
-    this.purchaseButton.disabled = !value;
-    this.purchaseButton.textContent = 'Недоступно';
+    if (!value) {
+      this.purchaseButton.disabled = true;
+      this.purchaseButton.textContent = 'Недоступно';
+    }
   }
-}
+};
