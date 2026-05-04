@@ -35,6 +35,9 @@ export class CardPreview extends CardWithImage<ICardPreviewData> {
     if (!value) {
       this.purchaseButton.disabled = true;
       this.purchaseButton.textContent = 'Недоступно';
+      return;
     }
+
+    this.purchaseButton.disabled = false;
   }
 };

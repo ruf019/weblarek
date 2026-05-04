@@ -24,6 +24,7 @@ export class Cart {
 
   clear(): void {
     this.selectedProducts = [];
+    this.events.emit('basket:changed');
   }
 
   getTotalPrice(): number {

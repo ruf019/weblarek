@@ -3,6 +3,8 @@ import { Api } from "./components/base/Api";
 import { EventEmitter } from "./components/base/Events";
 import { Cart } from "./components/models/Cart";
 import { ProductCatalog } from "./components/models/ProductCatalog";
+import { Basket } from "./components/view/Basket";
+import { CardBasket } from "./components/view/CardBasket";
 import { CardCatalog } from "./components/view/CardCatalog";
 import { CardPreview } from "./components/view/CardPreview";
 import { Gallery } from "./components/view/Gallery";
@@ -21,8 +23,8 @@ const webLarekApi = new WebLarekApi(baseApi);
 const events = new EventEmitter();
 
 // Модели данных
-const productCatalog = new ProductCatalog(events);
-const cart = new Cart(events);
+const productCatalogModel = new ProductCatalog(events);
+const cartModel = new Cart(events);
 
 // DOM-элементы и шаблоны
 const galleryElement = ensureElement<HTMLElement>(".gallery");
@@ -30,15 +32,41 @@ const catalogCardTemplate = ensureElement<HTMLTemplateElement>("#card-catalog");
 const previewCardTemplate = ensureElement<HTMLTemplateElement>("#card-preview");
 const modalElement = ensureElement<HTMLElement>("#modal-container");
 const headerElement = ensureElement<HTMLElement>(".header");
+const basketTemplate = ensureElement<HTMLTemplateElement>("#basket");
+const basketCardTemplate = ensureElement<HTMLTemplateElement>("#card-basket");
 
 // View-компоненты
-const gallery = new Gallery(galleryElement);
-const modal = new Modal(events, modalElement);
-const header = new Header(events, headerElement);
+const galleryView = new Gallery(galleryElement);
+const modalView = new Modal(events, modalElement);
+const headerView = new Header(events, headerElement);
+const basketView = new Basket(events, cloneTemplate(basketTemplate));
+const previewCard = new CardPreview(cloneTemplate(previewCardTemplate), {
+  onClick: () => events.emit("card:toggle"),
+});
+
+// Рендер корзины
+function renderBasketContent() {
+  const cardsInBasket = cartModel.getProducts().map((product, index) => {
+    const card = new CardBasket(cloneTemplate(basketCardTemplate), {
+      onClick: () => events.emit("basket:cardDelete", product),
+    });
+
+    return card.render({
+      ...product,
+      index: index + 1,
+    });
+  });
+
+  return basketView.render({
+    items: cardsInBasket,
+    total: cartModel.getTotalPrice(),
+    disabled: cartModel.getCount() === 0
+  })
+}
 
 // Подписки на события
 events.on("catalog:changed", () => {
-  const productCards = productCatalog.getProducts().map((product) => {
+  const productCards = productCatalogModel.getProducts().map((product) => {
     const card = new CardCatalog(cloneTemplate(catalogCardTemplate), {
       onClick: () => events.emit("card:select", product),
     });
@@ -46,63 +74,69 @@ events.on("catalog:changed", () => {
     return card.render(product);
   });
 
-  gallery.render({ cards: productCards });
+  galleryView.render({ cards: productCards });
 });
 
 events.on<IProduct>("card:select", (product) => {
-  productCatalog.setSelectedProduct(product);
+  productCatalogModel.setSelectedProduct(product);
+});
 
-  const previewCard = new CardPreview(cloneTemplate(previewCardTemplate), {
-    onClick: () => events.emit("card:toggle", product),
-  });
+events.on('selectedProduct:changed', () => {
+  const selectedProduct = productCatalogModel.getSelectedProduct();
+  if (!selectedProduct) return;
 
-  modal.render({
+  modalView.render({
     content: previewCard.render({
-      ...product,
-      inBasket: cart.hasProduct(product.id),
-      available: product.price !== null,
+      ...selectedProduct,
+      inBasket: cartModel.hasProduct(selectedProduct.id),
+      available: selectedProduct.price !== null,
     }),
   });
 
-  modal.open();
-});
+  modalView.open();
+})
 
 events.on("modal:close", () => {
-  modal.close();
+  modalView.close();
 });
 
-events.on<IProduct>("card:toggle", (product) => {
-  if (cart.hasProduct(product.id)) {
-    cart.removeProduct(product);
+events.on("card:toggle", () => {
+  const selectedProduct = productCatalogModel.getSelectedProduct();
+  if (!selectedProduct) return;
+
+  if (cartModel.hasProduct(selectedProduct.id)) {
+    cartModel.removeProduct(selectedProduct);
   } else {
-    cart.addProduct(product);
+    cartModel.addProduct(selectedProduct);
   }
+
+  modalView.close()
 });
 
 events.on("basket:changed", () => {
-  header.render({
-    counter: cart.getCount(),
+  headerView.render({
+    counter: cartModel.getCount(),
   });
 
-  const selectProduct = productCatalog.getSelectedProduct();
+  renderBasketContent(); 
+});
 
-  if (selectProduct) {
-    const previewCard = new CardPreview(cloneTemplate(previewCardTemplate), {
-      onClick: () => events.emit("card:toggle", selectProduct),
-    });
+events.on("basket:open", () => {
+  modalView.render({
+    content: renderBasketContent(),
+  })
+  modalView.open();
+});
 
-    modal.render({
-      content: previewCard.render({
-        ...selectProduct,
-        inBasket: cart.hasProduct(selectProduct.id),
-        available: selectProduct.price !== null,
-      }),
-    });
-  }
+events.on<IProduct>("basket:cardDelete", (product) => {
+  cartModel.removeProduct(product);
 });
 
 // Старт приложения
 webLarekApi
   .getProducts()
-  .then((data) => productCatalog.setProducts(data.items))
+  .then((data) => {
+    productCatalogModel.setProducts(data.items)
+    console.log(productCatalogModel.getProducts())
+  })
   .catch((error) => console.error(error));

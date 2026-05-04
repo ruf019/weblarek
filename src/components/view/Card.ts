@@ -26,7 +26,7 @@ export abstract class Card<T extends ICardData> extends Component<T> {
   }
 
   get title() {
-    return this.titleElement.textContent;
+    return this.titleElement.textContent ?? '';
   }
 
   set price(value: number | null) {
