@@ -81,6 +81,10 @@ function renderBasketContent() {
 // Переменная для отслеживания, какая форма открыта
 let activeForm: "order" | "contacts" | null = null;
 
+// Флаги изменения форм
+let isOrderFormTouched = false;
+let isContactsFormTouched = false;
+
 // Рендер orderForm
 function renderOrderForm(): HTMLElement {
   const buyerData = buyerModel.getData();
@@ -90,7 +94,7 @@ function renderOrderForm(): HTMLElement {
     payment: buyerData.payment,
     address: buyerData.address,
     valid: !errors.payment && !errors.address,
-    errors: [errors.payment, errors.address].filter(Boolean).join("; "),
+    errors: isOrderFormTouched ? errors.payment || errors.address || "" : "",
   });
 }
 
@@ -103,7 +107,7 @@ function renderContactsForm(): HTMLElement {
     email: buyerData.email,
     phone: buyerData.phone,
     valid: !errors.email && !errors.phone,
-    errors: [errors.email, errors.phone].filter(Boolean).join("; "),
+    errors: isContactsFormTouched ? errors.email || errors.phone || "" : "",
   });
 }
 
@@ -177,6 +181,7 @@ events.on<IProduct>("basket:cardDelete", (product) => {
 
 events.on("order:open", () => {
   activeForm = "order";
+  isOrderFormTouched = false;
 
   modalView.render({
     content: renderOrderForm(),
@@ -195,15 +200,18 @@ events.on("buyer:changed", () => {
 });
 
 events.on<IBuyer>("order.payment:changed", ({ payment }) => {
+  isOrderFormTouched = true;
   buyerModel.setData({ payment });
 });
 
 events.on<IBuyer>("order.address:changed", ({ address }) => {
+  isOrderFormTouched = true;
   buyerModel.setData({ address });
 });
 
 events.on("order:submit", () => {
   activeForm = "contacts";
+  isContactsFormTouched = false;
 
   modalView.render({
     content: renderContactsForm(),
@@ -211,10 +219,12 @@ events.on("order:submit", () => {
 });
 
 events.on<IBuyer>("contacts.email:changed", ({ email }) => {
+  isContactsFormTouched = true;
   buyerModel.setData({ email });
 });
 
 events.on<IBuyer>("contacts.phone:changed", ({ phone }) => {
+  isContactsFormTouched = true;
   buyerModel.setData({ phone });
 });
 
