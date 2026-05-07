@@ -1,9 +1,10 @@
 import { IBuyer, TErrorsBuyer } from "../../types/index.ts";
+import { IEvents } from "../base/Events.ts";
 
 export class Buyer {
   protected buyerData: IBuyer;
 
-  constructor() {
+  constructor(protected events: IEvents) {
     this.buyerData = {
       payment: '',
       address: '',
@@ -13,7 +14,8 @@ export class Buyer {
   }
 
   setData(data: Partial<IBuyer>): void {
-    this.buyerData = {...this.buyerData, ...data}
+    this.buyerData = {...this.buyerData, ...data};
+    this.events.emit('buyer:changed');
   }
   
   getData(): IBuyer {
@@ -27,6 +29,7 @@ export class Buyer {
       phone: '',
       email: ''
     }
+    this.events.emit('buyer:changed');
   }
 
   validate(): TErrorsBuyer {
