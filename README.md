@@ -337,6 +337,11 @@ interface IGalleryData {
 
 `constructor(container: HTMLElement)` - принимает ссылку на DOM элемент за отображение, которого он отвечает.
 
+Поля класса:
+
+`container: HTMLElement` — корневой DOM-элемент галереи, в который вставляются карточки товаров.
+
+
 Методы класса:  
 
 `set cards(items: HTMLElement[])` - сеттер, который устанавливает список товаров.
@@ -363,6 +368,12 @@ interface IHeaderData {
 
 `constructor(events: IEvents, container: HTMLElement)` — принимает брокер событий и корневой DOM-элемент компонента.
 
+Поля класса:
+
+`basketButton: HTMLButtonElement` — кнопка открытия корзины.  
+`counterElement: HTMLElement` — элемент, отображающий количество товаров в корзине.
+
+
 Методы класса:
 
 `set counter(value: number)` — сеттер, который обновляет счётчик товаров в корзине.
@@ -388,6 +399,12 @@ interface IModalData {
 Конструктор:
 
 `constructor(events: IEvents, container: HTMLElement)` — принимает брокер событий и корневой DOM-элемент модального окна.
+
+Поля класса:
+
+`closeButton: HTMLButtonElement` — кнопка закрытия модального окна.  
+`contentElement: HTMLElement` — контейнер для содержимого модального окна.
+
 
 Методы класса:
 
@@ -425,6 +442,13 @@ interface IBasketData {
 
 `constructor(events: IEvents, container: HTMLElement)` — принимает брокер событий и корневой DOM-элемент корзины.
 
+Поля класса:
+
+`listElement: HTMLElement` — контейнер списка товаров в корзине.  
+`placeOrderButton: HTMLButtonElement` — кнопка оформления заказа.  
+`priceElement: HTMLElement` — элемент, отображающий общую стоимость корзины.
+
+
 Методы класса:
 
 `set items(items: HTMLElement[])` — сеттер, который обновляет список товаров в корзине.
@@ -458,6 +482,12 @@ export interface ICardData {
 
 `constructor(container: HTMLElement)` — принимает корневой DOM-элемент карточки товара.
 
+Поля класса:
+
+`titleElement: HTMLElement` — элемент названия товара.  
+`priceElement: HTMLElement` — элемент цены товара.
+
+
 Методы класса:
 
 `set title(value: string)` — сеттер, который устанавливает название товара.
@@ -490,6 +520,12 @@ interface ICardWithImageData extends ICardData {
 
 `constructor(container: HTMLElement)` — принимает корневой DOM-элемент карточки товара.
 
+Поля класса:
+
+`categoryElement: HTMLElement` — элемент категории товара.  
+`imageElement: HTMLImageElement` — элемент изображения товара.
+
+
 Методы класса:
 
 `set category(value: string)` — сеттер, который устанавливает название категории и CSS-модификатор категории.
@@ -515,6 +551,11 @@ interface ICardCatalogData extends ICardWithImageData {}
 Конструктор:
 
 `constructor(container: HTMLElement, actions?: ICardActions)` — принимает корневой DOM-элемент карточки и объект обработчиков действий пользователя.
+
+Поля класса:
+
+Собственных полей не добавляет, использует поля, унаследованные от класса `CardWithImage`.
+
 
 Методы класса:
 
@@ -548,6 +589,12 @@ interface ICardPreviewData extends ICardWithImageData {
 
 `constructor(container: HTMLElement, actions?: ICardActions)` — принимает корневой DOM-элемент карточки и объект обработчиков действий пользователя.
 
+Поля класса:
+
+`descriptionElement: HTMLElement` — элемент описания товара.  
+`purchaseButton: HTMLButtonElement` — кнопка покупки или удаления товара из корзины.
+
+
 Методы класса:
 
 `set description(value: string)` — сеттер, который устанавливает описание товара.
@@ -577,6 +624,12 @@ interface ICardBasketData extends ICardData {
 
 `constructor(container: HTMLElement, actions?: ICardActions)` — принимает корневой DOM-элемент карточки и объект обработчиков действий пользователя.
 
+Поля класса:
+
+`indexElement: HTMLElement` — элемент порядкового номера товара в корзине.  
+`deleteButton: HTMLButtonElement` — кнопка удаления товара из корзины.
+
+
 Методы класса:
 
 `set index(value: number)` — сеттер, который устанавливает порядковый номер товара в корзине.
@@ -605,6 +658,12 @@ interface IFormData {
 Конструктор:
 
 `constructor(events: IEvents, container: HTMLFormElement)` — принимает брокер событий и корневой DOM-элемент формы.
+
+Поля класса:
+
+`submitButton: HTMLButtonElement` — кнопка отправки формы.  
+`errorsElement: HTMLElement` — элемент для отображения текста ошибок формы.
+
 
 Методы класса:
 
@@ -637,6 +696,13 @@ interface IFormOrderData extends IFormData {
 
 `constructor(events: IEvents, container: HTMLFormElement)` — принимает брокер событий и корневой DOM-элемент формы.
 
+Поля класса:
+
+`cardButton: HTMLButtonElement` — кнопка выбора онлайн-оплаты.  
+`cashButton: HTMLButtonElement` — кнопка выбора оплаты при получении.  
+`addressInput: HTMLInputElement` — поле ввода адреса доставки.
+
+
 Методы класса:
 
 `set payment(value: TPayment)` — сеттер, который визуально выделяет выбранный способ оплаты.
@@ -668,6 +734,12 @@ interface IFormContactsData extends IFormData {
 
 `constructor(events: IEvents, container: HTMLFormElement)` — принимает брокер событий и корневой DOM-элемент формы.
 
+Поля класса:
+
+`emailInput: HTMLInputElement` — поле ввода email покупателя.  
+`phoneInput: HTMLInputElement` — поле ввода телефона покупателя.
+
+
 Методы класса:
 
 `set email(value: string)` — сеттер, который устанавливает значение поля email.
@@ -695,6 +767,12 @@ interface ISuccessData {
 Конструктор:
 
 `constructor(events: IEvents, container: HTMLElement)` — принимает брокер событий и корневой DOM-элемент компонента.
+
+Поля класса:
+
+`descriptionElement: HTMLElement` — элемент текста с итоговой суммой списания.  
+`successButton: HTMLButtonElement` — кнопка закрытия окна успешного оформления заказа.
+
 
 Методы класса:
 
