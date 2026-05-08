@@ -78,23 +78,17 @@ function renderBasketContent() {
   });
 }
 
-// Переменная для отслеживания, какая форма открыта
-let activeForm: "order" | "contacts" | null = null;
-
-// Флаги изменения форм
-let isOrderFormTouched = false;
-let isContactsFormTouched = false;
-
 // Рендер orderForm
 function renderOrderForm(): HTMLElement {
   const buyerData = buyerModel.getData();
   const errors = buyerModel.validate();
+  const hasOrderData = buyerData.payment !== "" || buyerData.address !== "";
 
   return orderForm.render({
     payment: buyerData.payment,
     address: buyerData.address,
     valid: !errors.payment && !errors.address,
-    errors: isOrderFormTouched ? errors.payment || errors.address || "" : "",
+    errors: hasOrderData ? errors.payment || errors.address || "" : "",
   });
 }
 
@@ -102,12 +96,13 @@ function renderOrderForm(): HTMLElement {
 function renderContactsForm(): HTMLElement {
   const buyerData = buyerModel.getData();
   const errors = buyerModel.validate();
+  const hasContactsData = buyerData.email !== "" || buyerData.phone !== "";
 
   return contactsForm.render({
     email: buyerData.email,
     phone: buyerData.phone,
     valid: !errors.email && !errors.phone,
-    errors: isContactsFormTouched ? errors.email || errors.phone || "" : "",
+    errors: hasContactsData ? errors.email || errors.phone || "" : "",
   });
 }
 
@@ -170,7 +165,7 @@ events.on("basket:changed", () => {
 
 events.on("basket:open", () => {
   modalView.render({
-    content: renderBasketContent(),
+    content: basketView.render(),
   });
   modalView.open();
 });
@@ -180,51 +175,36 @@ events.on<IProduct>("basket:cardDelete", (product) => {
 });
 
 events.on("order:open", () => {
-  activeForm = "order";
-  isOrderFormTouched = false;
-
   modalView.render({
-    content: renderOrderForm(),
+    content: orderForm.render(),
   });
   modalView.open();
 });
 
 events.on("buyer:changed", () => {
-  if (activeForm === "order") {
-    renderOrderForm();
-  }
-
-  if (activeForm === "contacts") {
-    renderContactsForm();
-  }
+  renderOrderForm();
+  renderContactsForm();
 });
 
 events.on<IBuyer>("order.payment:changed", ({ payment }) => {
-  isOrderFormTouched = true;
   buyerModel.setData({ payment });
 });
 
 events.on<IBuyer>("order.address:changed", ({ address }) => {
-  isOrderFormTouched = true;
   buyerModel.setData({ address });
 });
 
 events.on("order:submit", () => {
-  activeForm = "contacts";
-  isContactsFormTouched = false;
-
   modalView.render({
-    content: renderContactsForm(),
+    content: contactsForm.render(),
   });
 });
 
 events.on<IBuyer>("contacts.email:changed", ({ email }) => {
-  isContactsFormTouched = true;
   buyerModel.setData({ email });
 });
 
 events.on<IBuyer>("contacts.phone:changed", ({ phone }) => {
-  isContactsFormTouched = true;
   buyerModel.setData({ phone });
 });
 
